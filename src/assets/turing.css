@@ -1,0 +1,324 @@
+/*
+ * 纯CSS图灵完备
+ */
+@layer number-type-grinding {
+  /* 自定义枚举关键字映射 0|1 bit位 */
+  @property --size {
+    syntax: 'sm|md|lg';
+    initial-value: md;
+    inherits: true;
+  }
+
+  @property --sm-else-0 {
+    syntax: 'sm|<integer>';
+    initial-value: 0;
+    inherits: true;
+  }
+  @property --md-else-0 {
+    syntax: 'md|<integer>';
+    initial-value: 0;
+    inherits: true;
+  }
+  @property --lg-else-0 {
+    syntax: 'lg|<integer>';
+    initial-value: 0;
+    inherits: true;
+  }
+
+  @property --sm-bit {
+    syntax: '<integer>';
+    initial-value: 1;
+    inherits: true;
+  }
+  @property --md-bit {
+    syntax: '<integer>';
+    initial-value: 1;
+    inherits: true;
+  }
+  @property --lg-bit {
+    syntax: '<integer>';
+    initial-value: 1;
+    inherits: true;
+  }
+
+  [size='sm'] {
+    --size: sm;
+  }
+  [size='lg'] {
+    --size: lg;
+  }
+
+  /* 全局定义状态转移和bit位 */
+  :root {
+    --sm-else-0: var(--size);
+    --md-else-0: var(--size);
+    --lg-else-0: var(--size);
+
+    --sm-bit: var(--sm-else-0);
+    --md-bit: var(--md-else-0);
+    --lg-bit: var(--lg-else-0);
+  }
+
+  .number-type-grinding {
+    /*
+     * bit的计算依赖枚举值，在使用bit位时，默认的bit位由根节点计算，当元素需要自定义不同枚举时，需要将状态转移和bit的计算全部定义一遍
+     * 结合第一点，我们区分出两种元素，1. 会设置枚举的元素 2. 只使用bit的元素
+     * 在设置枚举时，使用预先定义的[enum=member]
+     * 只涉及到计算的元素，如组件内部的header，只需要响应枚举计算即可，该元素不需要定义bit
+     */
+    --sm-else-0: var(--size);
+    --md-else-0: var(--size);
+    --lg-else-0: var(--size);
+
+    --sm-bit: var(--sm-else-0);
+    --md-bit: var(--md-else-0);
+    --lg-bit: var(--lg-else-0);
+
+    --font-sm: 0.875rem;
+    --font-md: 1rem;
+    --font-lg: 1.25rem;
+
+    /*
+     * 当需要数值映射时
+     * @example
+     * `const number = {sm:number,md:number,lg:number}[size]`
+     * @example --number: calc(number * var(--sm-bit) + number * var(--md-bit) + number * var(--lg-bit))
+     */
+    font-size: calc(var(--sm-bit) * var(--font-sm) + var(--md-bit) * var(--font-md) + var(--lg-bit) * var(--font-lg));
+
+    --pad-sm: 0.25rem;
+    --pad-md: 0.5rem;
+    --pad-lg: 0.75rem;
+
+    padding: calc(var(--sm-bit) * var(--pad-sm) + var(--md-bit) * var(--pad-md) + var(--lg-bit) * var(--pad-lg));
+  }
+}
+
+@layer keyword-type-grinding {
+  /* 
+   * 1. 定义枚举值
+   * enum Position { LEFT, TOP, RIGHT, BOTTOM }
+   * 2. 定义关键字映射, keyword可重复，f(enum) = keyword，keyword不一定是一个单纯的关键字，如 none、flex、object-fit，也可是一个复杂计算值，如 255,0,0、1px solid red、calc(var(--h1-font-size) * 1.25)
+   * const map = { [Position.LEFT]: keyword, [Position.TOP]: keyword, [Position.RIGHT]: keyword, [Position.BOTTOM]: keyword }
+   * 3. 使用映射
+   * const keyword = computed(()=> map[enum])
+   */
+  /*
+   * 与JS内简单的三步有些许不同，CSS无函数计算能力，因此我们需要利用@property的syntax语法，来实现值的过滤，也可实现  f(enum) = keyword的效果，此时的keyword结果值也可重复，只是在CSS编写方法中，重复的结果值我们不需要重复书写，需要手动进行code组织
+   * 核心技巧为filter，即通过多重filter，将错误的keyword过滤，得到正确的映射关系
+   * 1. enum Position { LEFT, TOP, RIGHT, BOTTOM }
+   * 2. const map = { [Position.LEFT]: inline-block, [Position.TOP]: block, [Position.RIGHT]: none, [Position.BOTTOM]: none }
+   * 可以看到，我们的map定义中存在重复项，在RIGHT与BOTTOM时，映射值都为none
+   /*
+   * 定义枚举值，同时定义该枚举的默认值
+   */
+  @property --position {
+    syntax: 'left|top|right|bottom';
+    initial-value: left;
+    inherits: true;
+  }
+  /*
+   * 分析map结构，发现none有重复映射，我们对映射关系做一次排序去重，最终map结构为 const map = { [Position.RIGHT]: none, [Position.BOTTOM]: none, [Position.LEFT]: inline-block, [Position.TOP]: block }
+   * 定义过滤函数，initial-value声明为结果值其一，syntax = 映射值不为initial-value的enum - 上一步过滤函数不会返回的值 + 所有过滤函数的initial-value + 当前函数的initial-value
+   * 这里我们声明initial-value: none，观察map定义，LEFT:inline-block,TOP:block，这两个enum的映射值不为none，故我们在syntax中声明 left|top|none
+   */
+  @property --position-display-before-step1 {
+    syntax: 'left|top|none';
+    initial-value: none;
+    inherits: true;
+  }
+  /*
+   * 重复过滤函数
+   * 这里我们声明initial-value: inline-block，观察map定义，RIGHT:none,BOTTOM:none,TOP:block，这三个enum的映射值不为inline-block，故我们在syntax中声明 right|bottom|top|none|inline-block，因为上一步的过滤函数不会返回right|bottom，故我们删除多余的syntax定义
+   */
+  @property --position-display-before-step2 {
+    syntax: 'top|none|inline-block';
+    initial-value: inline-block;
+    inherits: true;
+  }
+  /*
+   * 重复过滤函数
+   * 我们还剩最后一个映射，因此这就是我们的最后一个过滤函数，这里我们声明initial-value: block，观察map定义，RIGHT:none,BOTTOM:none,LEFT:inline-block，这三个enum的映射值不为block，故我们在syntax中声明 right|bottom|left|none|inline-block|block，因为上一步的过滤函数不会返回right|bottom|left，故我们删除多余的syntax定义，此时syntax就只剩下all-initial-value + current-initial-value了
+   * 这个最后的过滤函数可以不声明为stepXXX，因为它就是我们需要的映射值，你可以直接声明为具体的名称，比如这里的--display-before，表示它会使用在display中
+   */
+  @property --position-display-before {
+    syntax: 'none|inline-block|block';
+    initial-value: block;
+    inherits: true;
+  }
+  /*
+   * 可以看到，我们的过滤函数数量等于映射值的数量，与枚举值的数量无关，故如果所有的枚举值都映射为一个值，我们可以写
+   * @property --step1 { initial-value: none; syntax: 'none' }
+   * 此时没有映射值不为initial-value的enum，也没有上一步过滤函数，故syntax = none + 空 + 空 = 'none'
+   * 当然，实际情况的映射至少有两个，一个是没有意义的
+   */
+  @property --position-display-after-step1 {
+    syntax: 'right|bottom|none';
+    initial-value: none;
+    inherits: true;
+  }
+  @property --position-display-after-step2 {
+    syntax: 'bottom|none|inline-block';
+    initial-value: inline-block;
+    inherits: true;
+  }
+  @property --position-display-after {
+    syntax: 'none|inline-block|block';
+    initial-value: block;
+    inherits: true;
+  }
+  [position='left'] {
+    --position: left;
+  }
+  [position='top'] {
+    --position: top;
+  }
+  [position='right'] {
+    --position: right;
+  }
+  [position='bottom'] {
+    --position: bottom;
+  }
+
+  .keyword-type-grinding {
+    --position-display-before-step1: var(--position);
+    --position-display-before-step2: var(--position-display-before-step1);
+    --position-display-before: var(--position-display-before-step2);
+
+    --position-display-after-step1: var(--position);
+    --position-display-after-step2: var(--position-display-after-step1);
+    --position-display-after: var(--position-display-after-step2);
+  }
+  .keyword-type-grinding::before {
+    display: var(--position-display-before);
+    content: 'before';
+  }
+  .keyword-type-grinding::after {
+    display: var(--position-display-after);
+    content: 'after';
+  }
+}
+
+@layer animation-type-grinding {
+  /* 利用负延迟animation-delay、keyframes复数定义任意variable */
+  @property --variant {
+    syntax: 'primary|secondary|success|error';
+    initial-value: primary;
+    inherits: true;
+  }
+
+  @property --primary-else-0 {
+    syntax: 'primary|<integer>';
+    initial-value: 0;
+    inherits: true;
+  }
+  @property --secondary-else-0 {
+    syntax: 'secondary|<integer>';
+    initial-value: 0;
+    inherits: true;
+  }
+  @property --success-else-0 {
+    syntax: 'success|<integer>';
+    initial-value: 0;
+    inherits: true;
+  }
+  @property --error-else-0 {
+    syntax: 'error|<integer>';
+    initial-value: 0;
+    inherits: true;
+  }
+
+  @property --primary-bit {
+    syntax: '<integer>';
+    initial-value: 1;
+    inherits: true;
+  }
+  @property --secondary-bit {
+    syntax: '<integer>';
+    initial-value: 1;
+    inherits: true;
+  }
+  @property --success-bit {
+    syntax: '<integer>';
+    initial-value: 1;
+    inherits: true;
+  }
+  @property --error-bit {
+    syntax: '<integer>';
+    initial-value: 1;
+    inherits: true;
+  }
+  @keyframes animation-type-grinding {
+    10% {
+      color: var(--primary-color);
+      background-color: var(--primary-bg);
+    }
+    20% {
+      color: var(--secondary-color);
+      background-color: var(--secondary-bg);
+    }
+    30% {
+      color: var(--success-color);
+      background-color: var(--success-bg);
+    }
+    40% {
+      color: var(--error-color);
+      background-color: var(--error-bg);
+    }
+  }
+  [variant='secondary'] {
+    --variant: secondary;
+  }
+  [variant='success'] {
+    --variant: success;
+  }
+  [variant='error'] {
+    --variant: error;
+  }
+
+  .animation-type-grinding {
+    --primary-bg: rebeccapurple;
+    --primary-color: white;
+
+    --secondary-bg: violet;
+    --secondary-color: black;
+
+    --success-bg: lime;
+    --success-color: black;
+
+    --error-bg: red;
+    --error-color: white;
+
+    --primary-else-0: var(--variant);
+    --secondary-else-0: var(--variant);
+    --success-else-0: var(--variant);
+    --error-else-0: var(--variant);
+
+    --primary-bit: var(--primary-else-0);
+    --secondary-bit: var(--secondary-else-0);
+    --success-bit: var(--success-else-0);
+    --error-bit: var(--error-else-0);
+
+    --paused-position: calc((var(--primary-bit) + var(--secondary-bit) * 2 + var(--success-bit) * 3 + var(--error-bit) * 4 + 0.5) * -10ms);
+    background-image: none;
+    animation: animation-type-grinding 100ms step-end both paused var(--paused-position);
+  }
+}
+
+@layer logic-grinding {
+   lightpink .A {
+    --logic: number;
+    counter-reset: logic var(--bit);
+    content: counter(logic);
+    background-color: ;
+    --bg: var(--A, 1) var(--NOT-A);
+    --NOT-A: var(--A) 0;
+    background: var(--A, 1) var(--NOT-A);
+  }
+  .B {
+    --NOT-B: var(--B) var(--FALSE);
+    background: var(--B, var(--TRUE)) var(--NOT-B);
+  }
+}
+
+/* .el-dialog__wrapper,.el-drawer__wrapper,.el-dropdown-menu,.el-cascader__dropdown,.el-popover,.search-panel,.el-tooltip:empty,.el-select-dropdown{} */

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>playground</title>
+<link href="/icon.svg" rel="icon" />
+<style>
+  :root {
+    line-height: 1.5;
+  }
+  fieldset {
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+</style>
+<script type="module">
+  import {reactive, computed} from './reactivity.mjs'
+  const state = reactive({
+    form: {
+      platform_source: 1,
+    },
+    list: []
+  })
+  const CNFormatter = new Intl.NumberFormat('zh-CN', {notation: 'compact'})
+  const CNYFormatter = new Intl.NumberFormat('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+    currencySign: 'accounting',
+    notation: 'compact',
+  })
+
+  const double = computed({
+    get() {
+      return state.count
+    }
+  })
+  function handleSubmit() {
+    this
+  }
+  function CreateEventOptions() {
+    with (this.instance) {
+      return {
+        type: 'change',
+        instance: this.instance,
+        $handleEvent() {
+          state.form.platform_source = this.form.platform_source.value
+        },
+        handleEvent(event) {
+          event.preventDefault()
+          Reflect.apply(this.$handleEvent, event.currentTarget, arguments)
+        }
+      }
+    }
+  }
+</script>
+<form @submit.prevent="handleSubmit">
+  <fieldset @change.prevent="state.form.platform_source = this.form.platform_source.value">
+    <label><input type="radio" name="platform_source" value="1" />抖音</label>
+    <label><input type="radio" name="platform_source" value="2" />火山</label>
+  </fieldset>
+  <input type="search" name="search" />
+  <table border="1" cellpadding="0" rules="none">
+    <thead>
+      <tr>
+        <th>信息</th>
+        <th>代表视频</th>
+        <th>
+          粉丝数
+          <fieldset>
+            <label><input type="radio" name="sort" value="fans_num_asc" checked />🔼</label><label><input type="radio" name="sort" value="fans_num_desc" />🔽</label>
+          </fieldset>
+        </th>
+        <th>
+          预期CPM
+          <fieldset>
+            <label><input type="radio" name="sort" value="expect_cpm_asc" />🔼</label><label><input type="radio" name="sort" value="expect_cpm_desc" />🔽</label>
+          </fieldset>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr #for="row of state.list">
+        <td><!--69岁扶墙对抗-->{{ row.name }}</td>
+        <td>
+          <img hidden fetchpriority="low" decoding="async" loading="lazy" src="/articles/anchor-position/poster.avif" width="128" height="64" alt />
+          <img fetchpriority="low" decoding="async" loading="lazy" :src="row.cover_url" width="128" height="64" alt />
+        </td>
+        <td><!--100万-->{{ CNFormatter.format(row.fans_num) }}</td>
+        <td><!--￥12.3-->{{ CNYFormatter.format(row.expect_cpm) }}人</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="999"></td>
+      </tr>
+    </tfoot>
+  </table>
+</form>

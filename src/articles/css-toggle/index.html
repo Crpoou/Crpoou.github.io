@@ -10,4 +10,18 @@
     <img fetchpriority="low" decoding="async" loading="lazy" width="720" src="/articles/anchor-position/poster.avif" alt class="rounded-lg object-scale-down" style="view-transition-name: view-name-8e7a0597-b1ea-4b99-b3d3-349bf018f88f" />
   </center>
   <h1 class="is-fit mi-auto" style="view-transition-name: view-name-04517fa4-8f62-4ff1-98a3-5aee9e80da0b">Future CSS: CSS Toggle</h1>
+  <p>众所周知，在CSS的世界中，我们更多的是声明一个普通选择器，然后设置它的样式，很少有状态的概念，更别说存储一个状态值了。我通过几个实例来认识下当前CSS世界中的状态存储方案</p>
+  <h2>&lt;input type=checkbox&gt;</h2>
+  <p>checkbox可以存储一个布尔值，通过:checked伪类选择器来选中</p>
+  <div>
+    <template shadowrootmode="open">
+      <label>黑暗模式<input type="checkbox" /></label>
+    </template>
+  </div>
+  <pre>
+    &lt;label&gt;黑暗模式&lt;input type=checkbox&gt;&lt;/label&gt;<button type="button"></button>
+    &lt;style&gt;
+    [type=checkbox]:checked
+    &lt;/style&gt;
+  </pre>
 </html>

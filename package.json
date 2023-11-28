@@ -13,5 +13,11 @@
   "devDependencies": {
     "vite": "latest",
     "html-minifier": "latest"
+  },
+  "dependencies": {
+    "@codemirror/language": "latest",
+    "@codemirror/lang-css": "latest",
+    "@lezer/highlight": "latest",
+    "@lezer/css": "latest"
   }
 }

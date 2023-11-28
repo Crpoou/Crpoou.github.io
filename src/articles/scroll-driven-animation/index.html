@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN" translate="no">
+  <meta charset="utf-8" />
+  <meta content="width=device-width,initial-scale=1" name="viewport" />
+  <meta name="view-transition" content="same-origin" />
+  <title>crpoou</title>
+  <link href="/icon.svg" rel="icon" />
+  <link href="/index.css" rel="stylesheet" />
+  <center>
+    <img fetchpriority="low" decoding="async" loading="lazy" width="720" src="/articles/anchor-position/poster.avif" alt class="rounded-lg object-scale-down" style="view-transition-name: view-name-d0510ac1-34d4-4f5d-93bf-c6aa0188f3a0" />
+  </center>
+  <h1 class="is-fit mi-auto" style="view-transition-name: view-name-5e8fa0b9-6145-4ff6-9edf-cf39f0a72ae5">Future CSS: Scroll Driven Animation</h1>
+  <h2>滚动驱动</h2>
+  <h2>自适应文本</h2>
+  <div shadowrootmode="closed">
+    <link href="/index.css" rel="stylesheet" />
+    
+  </div>
+  <h2>位置驱动</h2>
+  <h2>正确的阴影</h2>
+  <h2>交错动画</h2>
+  <h2>反转图层顺序</h2>
+  <h2>对Flex或Grid容器边缘上的元素进行边缘检测</h2>
+  <h2>柔性缠绕检测</h2>
+  <h2>滚动容器检测</h2>
+  <div shadowrootmode="closed">
+    <link href="/index.css" rel="stylesheet" />
+    <style class="block">
+      .container {
+        width: 10rem;
+        height: 10rem;
+
+        --can-scroll: initial;
+        --can-scroll-size: var(--can-scroll) 1px;
+        --cannot-scroll-size: 0;
+        animation: anim;
+        animation-timeline: scroll(self);
+        outline: var(--can-scroll-size, var(--cannot-scroll-size)) solid red;
+      }
+      @keyframes anim {
+        from, to { --can-scroll: ;}
+      }
+    </style>
+    <div class="container">
+      <div></div>
+    </div>
+    <div class="container"></div>
+  </div>
+</html>

@@ -13,7 +13,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         ...(function (PAGE_PATH) {
           return fs.readdirSync(PAGE_PATH).map(x => join(PAGE_PATH, x, 'index.html'))
-        })(resolve(__dirname, './articles'))
+        })(resolve(__dirname, './src/articles'))
       },
       output: {
         entryFileNames: '[name].mjs'
@@ -21,6 +21,12 @@ export default defineConfig({
     },
     modulePreload: {
       polyfill: false
+    }
+  },
+  resolve: {
+    alias: {
+      '@constant': 'src/constant.ts',
+      '@util': 'src/util.ts',
     }
   },
   plugins: [
